@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard - Consultas & Gupshup</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: #e5e7eb;
+        padding: 20px;
+    }
+
+    h1, h2 {
+        margin-bottom: 10px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background: #020617;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #1e293b;
+    }
+
+    .card h3 {
+        margin: 0;
+        font-size: 14px;
+        color: #94a3b8;
+    }
+
+    .card p {
+        font-size: 28px;
+        margin: 8px 0 0;
+        font-weight: bold;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #020617;
+        margin-top: 10px;
+    }
+
+    th, td {
+        padding: 10px;
+        border-bottom: 1px solid #1e293b;
+        text-align: left;
+    }
+
+    th {
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .GREEN { color: #22c55e; font-weight: bold; }
+    .YELLOW { color: #eab308; font-weight: bold; }
+    .RED { color: #ef4444; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<h1>📊 Dashboard Operacional</h1>
+
+<!-- ================= STATUS CONSULTAS ================= -->
+<h2>Status das Consultas</h2>
+<div class="grid" id="consultas-cards">
+    <div class="card">Carregando...</div>
+</div>
+
+<!-- ================= GUPSHUP ================= -->
+<h2>Saúde dos Números (Gupshup)</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Qualidade</th>
+            <th>Tier</th>
+        </tr>
+    </thead>
+    <tbody id="gupshup-table">
+        <tr>
+            <td colspan="4">Carregando...</td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+/* ================= CONFIG ================= */
+const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
+const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
+
+/* ================= CONSULTAS STATUS ================= */
+async function carregarConsultasStatus() {
+    const container = document.getElementById("consultas-cards");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/webhook/consultas-status`, {
+            headers: { apikey: API_KEY }
+        });
+
+        const data = await res.json();
+        container.innerHTML = "";
+
+        data.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+                <h3>${item.status}</h3>
+                <p>${item.count}</p>
+            `;
+            container.appendChild(card);
+        });
+
+    } catch (e) {
+        container.innerHTML = "<div class='card'>Erro ao carregar</div>";
+        console.error(e);
+    }
+}
+
+/* ================= GUPSHUP ================= */
+async function carregarGupshup() {
+    const tbody = document.getElementById("gupshup-table");
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/webhook/gupshup/waba-health`, {
+            headers: { apikey: API_KEY }
+        });
+
+        const result = await res.json();
+        tbody.innerHTML = "";
+
+        result.data.forEach(item => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${item.name}</td>
+                <td>${item.phone}</td>
+                <td class="${item.phoneQuality}">
+                    ${item.phoneQuality}
+                </td>
+                <td>${item.messagingLimit}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (e) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4">Erro ao carregar dados</td>
+            </tr>
+        `;
+        console.error(e);
+    }
+}
+
+/* ================= INIT ================= */
+carregarConsultasStatus();
+carregarGupshup();
+
+/* 🔄 AUTO REFRESH (1 minuto) */
+setInterval(() => {
+    carregarConsultasStatus();
+    carregarGupshup();
+}, 60000);
+</script>
+
+</body>
+</html>
