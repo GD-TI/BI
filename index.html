@@ -63,11 +63,31 @@
     .GREEN { color: #22c55e; font-weight: bold; }
     .YELLOW { color: #eab308; font-weight: bold; }
     .RED { color: #ef4444; font-weight: bold; }
+    .fullscreen-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: #020617;
+    color: #e5e7eb;
+    border: 1px solid #1e293b;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 9999;
+    }
+
+    .fullscreen-btn:hover {
+        background: #020617;
+        border-color: #334155;
+    }
 </style>
 </head>
 
 <body>
-
+<button class="fullscreen-btn" onclick="toggleFullscreen()">
+    ⛶ Tela cheia
+</button>
 <h1>📊 Dashboard Operacional</h1>
 
 <!-- ================= STATUS CONSULTAS ================= -->
@@ -101,6 +121,17 @@ const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
 const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
 
 /* ================= CONSULTAS STATUS ================= */
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.error("Erro ao entrar em fullscreen:", err);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
 async function carregarConsultasStatus() {
     const container = document.getElementById("consultas-cards");
 
