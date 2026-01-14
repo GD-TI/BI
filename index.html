@@ -102,10 +102,9 @@
 <table>
     <thead>
         <tr>
-            <th>Nome</th>
             <th>Telefone</th>
             <th>Qualidade</th>
-            <th>Tier</th>
+            <th>Ultimo Disparo</th>
         </tr>
     </thead>
     <tbody id="gupshup-table">
@@ -174,12 +173,10 @@ async function carregarGupshup() {
         result.data.forEach(item => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${item.name}</td>
                 <td>${item.phone}</td>
                 <td class="${item.phoneQuality}">
                     ${item.phoneQuality}
                 </td>
-                <td>${item.messagingLimit}</td>
             `;
             tbody.appendChild(tr);
         });
