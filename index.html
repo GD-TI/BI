@@ -1,148 +1,222 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Dashboard - Consultas & Gupshup</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard Operacional</title>
 
-<style>
-    body {
+    <style>
+      /* ================= BASE ================= */
+      body {
         font-family: Arial, sans-serif;
-        background: #0f172a;
+        background: linear-gradient(180deg, #020617, #0f172a);
         color: #e5e7eb;
         padding: 20px;
-    }
+      }
 
-    h1, h2 {
-        margin-bottom: 10px;
-    }
+      h1 {
+        font-size: 26px;
+        margin-bottom: 20px;
+      }
 
-    .grid {
+      h2 {
+        font-size: 20px;
+        margin: 20px 0 10px;
+      }
+
+      /* ================= CARDS ================= */
+      .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 16px;
-        margin-bottom: 30px;
-    }
+      }
 
-    .card {
-        background: #020617;
+      .card {
+        background: radial-gradient(circle at top, #020617, #000);
         padding: 16px;
-        border-radius: 8px;
+        border-radius: 10px;
         border: 1px solid #1e293b;
-    }
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      }
 
-    .card h3 {
-        margin: 0;
-        font-size: 14px;
+      .card h3 {
+        font-size: 13px;
         color: #94a3b8;
-    }
+        margin: 0;
+        text-transform: uppercase;
+      }
 
-    .card p {
-        font-size: 28px;
-        margin: 8px 0 0;
+      .card p {
+        font-size: 32px;
+        margin-top: 8px;
         font-weight: bold;
-    }
+      }
 
-    table {
+      /* ================= STATUS COLORS ================= */
+      .GREEN {
+        color: #22c55e;
+      }
+      .YELLOW {
+        color: #eab308;
+      }
+      .RED {
+        color: #ef4444;
+      }
+
+      .WHITE {
+        color: #ffffff;
+      }
+
+      /* ================= TABELA ================= */
+      table {
         width: 100%;
         border-collapse: collapse;
         background: #020617;
-        margin-top: 10px;
-    }
+        border-radius: 10px;
+        overflow: hidden;
+      }
 
-    th, td {
-        padding: 10px;
+      th,
+      td {
+        padding: 12px;
         border-bottom: 1px solid #1e293b;
-        text-align: left;
-    }
+        font-size: 14px;
+      }
 
-    th {
+      th {
         color: #94a3b8;
-        font-size: 13px;
-    }
+        text-align: left;
+      }
 
-    .GREEN { color: #22c55e; font-weight: bold; }
-    .YELLOW { color: #eab308; font-weight: bold; }
-    .RED { color: #ef4444; font-weight: bold; }
-    .fullscreen-btn {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    background: #020617;
-    color: #e5e7eb;
-    border: 1px solid #1e293b;
-    padding: 10px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    z-index: 9999;
-    }
+      /* ================= LAYOUT ================= */
+      .top-section {
+        margin-bottom: 32px;
+      }
 
-    .fullscreen-btn:hover {
+      .bottom-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+      }
+
+      .grid-leads {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .lead-card {
+        border-left: 4px solid #22c55e;
+      }
+
+      /* ================= FULLSCREEN ================= */
+      .fullscreen-btn {
+        position: fixed;
+        top: 16px;
+        right: 16px;
         background: #020617;
-        border-color: #334155;
-    }
-</style>
-</head>
+        color: #e5e7eb;
+        border: 1px solid #1e293b;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 9999;
+      }
 
-<body>
-<button class="fullscreen-btn" onclick="toggleFullscreen()">
-    ⛶ Tela cheia
-</button>
-<h1>📊 Dashboard Operacional</h1>
+      /* ================= RESPONSIVO ================= */
+      @media (max-width: 1024px) {
+        .bottom-section {
+          grid-template-columns: 1fr;
+        }
+      }
 
-<!-- ================= STATUS CONSULTAS ================= -->
-<h2>Status das Consultas</h2>
-<div class="grid" id="consultas-cards">
-    <div class="card">Carregando...</div>
-</div>
+      /* Telefone */
+      #gupshup-table td:nth-child(1) {
+        font-size: 20px; /* telefone */
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
 
-<!-- ================= GUPSHUP ================= -->
-<h2>Saúde dos Números (Gupshup)</h2>
+      /* Qualidade (GREEN / RED) */
+      #gupshup-table td:nth-child(2) {
+        font-size: 20px; /* status */
+        font-weight: 300;
+        letter-spacing: 1.5px;
+      }
+    </style>
+  </head>
 
-<table>
-    <thead>
-        <tr>
-            <th>Telefone</th>
-            <th>Qualidade</th>
-            <th>Ultimo Disparo</th>
-        </tr>
-    </thead>
-    <tbody id="gupshup-table">
-        <tr>
-            <td colspan="4">Carregando...</td>
-        </tr>
-    </tbody>
-</table>
+  <body>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">
+      ⛶ Tela cheia
+    </button>
 
-<script>
-/* ================= CONFIG ================= */
-const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
-const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
+    <h1>📊 Dashboard Operacional</h1>
 
-/* ================= CONSULTAS STATUS ================= */
+    <!-- ================= TOPO ================= -->
+    <section class="top-section">
+      <h2>Status das Consultas</h2>
+      <div class="grid" id="consultas-cards">
+        <div class="card">Carregando...</div>
+      </div>
+    </section>
 
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-            console.error("Erro ao entrar em fullscreen:", err);
-        });
-    } else {
-        document.exitFullscreen();
-    }
-}
+    <!-- ================= PARTE INFERIOR ================= -->
+    <section class="bottom-section">
+      <!-- ESQUERDA -->
+      <div>
+        <h2>Saúde dos Números (Gupshup)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Telefone</th>
+              <th>Qualidade</th>
+              <th>Último Disparo</th>
+            </tr>
+          </thead>
+          <tbody id="gupshup-table">
+            <tr>
+              <td colspan="2">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-async function carregarConsultasStatus() {
-    const container = document.getElementById("consultas-cards");
+      <!-- DIREITA -->
+      <div>
+        <h2>Leads</h2>
+        <div class="grid-leads" id="leads-cards">
+          <div class="card lead-card">Carregando...</div>
+        </div>
+      </div>
+    </section>
 
-    try {
-        const res = await fetch(`${API_BASE_URL}/webhook/consultas-status`, {
-            headers: { apikey: API_KEY }
-        });
+    <script>
+      /* ================= CONFIG ================= */
+      const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
+      const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
 
-        const data = await res.json();
-        container.innerHTML = "";
+      /* ================= FULLSCREEN ================= */
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
 
-        data.forEach(item => {
+      /* ================= STATUS CONSULTAS ================= */
+      async function carregarConsultasStatus() {
+        const container = document.getElementById("consultas-cards");
+
+        try {
+          const res = await fetch(`${API_BASE_URL}/webhook/consultas-status`, {
+            headers: { apikey: API_KEY },
+          });
+
+          const data = await res.json();
+          container.innerHTML = "";
+
+          data.forEach((item) => {
             const card = document.createElement("div");
             card.className = "card";
             card.innerHTML = `
@@ -150,57 +224,77 @@ async function carregarConsultasStatus() {
                 <p>${item.count}</p>
             `;
             container.appendChild(card);
-        });
+          });
+        } catch {
+          container.innerHTML = "<div class='card'>Erro</div>";
+        }
+      }
 
-    } catch (e) {
-        container.innerHTML = "<div class='card'>Erro ao carregar</div>";
-        console.error(e);
-    }
-}
+      /* ================= LEADS ================= */
+      async function carregarLeads() {
+        const container = document.getElementById("leads-cards");
 
-/* ================= GUPSHUP ================= */
-async function carregarGupshup() {
-    const tbody = document.getElementById("gupshup-table");
+        try {
+          const res = await fetch(`${API_BASE_URL}/webhook/chatguru/leads`, {
+            headers: { apikey: API_KEY },
+          });
 
-    try {
-        const res = await fetch(`${API_BASE_URL}/webhook/gupshup/waba-health`, {
-            headers: { apikey: API_KEY }
-        });
+          const result = await res.json();
+          container.innerHTML = "";
 
-        const result = await res.json();
-        tbody.innerHTML = "";
+          result.data.forEach((item) => {
+            let color = "WHITE";
+            const card = document.createElement("div");
+            card.className = "card lead-card";
+            card.innerHTML = `
+                <h3>${item.name}</h3>
+                <p class="${color}">${item.aberto}</p>
+            `;
+            container.appendChild(card);
+          });
+        } catch {
+          container.innerHTML = "<div class='card'>Erro</div>";
+        }
+      }
 
-        result.data.forEach(item => {
+      /* ================= GUPSHUP ================= */
+      async function carregarGupshup() {
+        const tbody = document.getElementById("gupshup-table");
+
+        try {
+          const res = await fetch(
+            `${API_BASE_URL}/webhook/gupshup/waba-health`,
+            {
+              headers: { apikey: API_KEY },
+            }
+          );
+
+          const result = await res.json();
+          tbody.innerHTML = "";
+          result.data.forEach((item) => {
             const tr = document.createElement("tr");
+            var phone = item.phone;
             tr.innerHTML = `
-                <td>${item.phone}</td>
-                <td class="${item.phoneQuality}">
-                    ${item.phoneQuality}
-                </td>
+                <td>${phone.slice(-4)}</td>
+                <td class="${item.phoneQuality}">${item.phoneQuality}</td>
             `;
             tbody.appendChild(tr);
-        });
+          });
+        } catch {
+          tbody.innerHTML = "<tr><td colspan='2'>Erro</td></tr>";
+        }
+      }
 
-    } catch (e) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4">Erro ao carregar dados</td>
-            </tr>
-        `;
-        console.error(e);
-    }
-}
+      /* ================= INIT ================= */
+      carregarConsultasStatus();
+      carregarLeads();
+      carregarGupshup();
 
-/* ================= INIT ================= */
-carregarConsultasStatus();
-carregarGupshup();
-
-/* 🔄 AUTO REFRESH (1 minuto) */
-setInterval(() => {
-    carregarConsultasStatus();
-    carregarGupshup();
-}, 60000);
-</script>
-
-</body>
+      setInterval(() => {
+        carregarConsultasStatus();
+        carregarLeads();
+        carregarGupshup();
+      }, 60000);
+    </script>
+  </body>
 </html>
