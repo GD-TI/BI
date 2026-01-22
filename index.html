@@ -149,6 +149,30 @@
         font-weight: 500;
         color: #60a5fa;
       }
+
+      /* ================= LINHA DE TOTAL ================= */
+      .total-row {
+        border-top: 2px solid #3b82f6 !important;
+        background: rgba(59, 130, 246, 0.1);
+      }
+
+      .total-row td {
+        font-weight: bold;
+        font-size: 20px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
+
+      .total-row td:first-child {
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .total-row td:last-child {
+        color: #3b82f6;
+        font-size: 24px;
+      }
     </style>
   </head>
 
@@ -312,6 +336,8 @@
 
           tbody.innerHTML = "";
 
+          let totalGeral = 0;
+
           resultGupshup.data.forEach((item) => {
             const tr = document.createElement("tr");
             const phone = item.phone;
@@ -322,6 +348,7 @@
 
             // Busca o total de disparos usando o reference_number
             const totalDisparos = disparosMap[referenceNumber] || 0;
+            totalGeral += totalDisparos;
 
             tr.innerHTML = `
                 <td>${phoneNumber}</td>
@@ -330,6 +357,15 @@
             `;
             tbody.appendChild(tr);
           });
+
+          // Adiciona linha de total
+          const trTotal = document.createElement("tr");
+          trTotal.className = "total-row";
+          trTotal.innerHTML = `
+              <td colspan="2">Total Geral</td>
+              <td>${totalGeral.toLocaleString("pt-BR")}</td>
+          `;
+          tbody.appendChild(trTotal);
         } catch (error) {
           console.error("Erro ao carregar Gupshup:", error);
           tbody.innerHTML = "<tr><td colspan='3'>Erro</td></tr>";
