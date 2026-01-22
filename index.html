@@ -142,6 +142,13 @@
         font-weight: 300;
         letter-spacing: 1.5px;
       }
+
+      /* Total de disparos */
+      #gupshup-table td:nth-child(3) {
+        font-size: 18px;
+        font-weight: 500;
+        color: #60a5fa;
+      }
     </style>
   </head>
 
@@ -170,12 +177,12 @@
             <tr>
               <th>Telefone</th>
               <th>Qualidade</th>
-              <th>Último Disparo</th>
+              <th>Disparos Hoje</th>
             </tr>
           </thead>
           <tbody id="gupshup-table">
             <tr>
-              <td colspan="2">Carregando...</td>
+              <td colspan="3">Carregando...</td>
             </tr>
           </tbody>
         </table>
@@ -194,6 +201,15 @@
       /* ================= CONFIG ================= */
       const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
       const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
+      const HOJE_API_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/hoje"; // URL do endpoint Python
+
+      /* ================= MAPEAMENTO DE NÚMEROS ================= */
+      // Mapeia o número do Gupshup para o reference_number do /hoje
+      const PHONE_MAPPING = {
+        8303: "2611",
+        // Adicione mais mapeamentos conforme necessário
+        // "outro_numero_gupshup": "reference_number_correspondente",
+      };
 
       /* ================= FULLSCREEN ================= */
       function toggleFullscreen() {
@@ -257,31 +273,66 @@
         }
       }
 
+      /* ================= DISPAROS HOJE ================= */
+      async function carregarDisparosHoje() {
+        try {
+          const res = await fetch(HOJE_API_URL);
+          const data = await res.json();
+
+          // Cria um mapa de referência número -> total
+          const disparosMap = {};
+          data.forEach((item) => {
+            disparosMap[item.number] = item.total;
+          });
+
+          return disparosMap;
+        } catch (error) {
+          console.error("Erro ao carregar disparos de hoje:", error);
+          return {};
+        }
+      }
+
       /* ================= GUPSHUP ================= */
       async function carregarGupshup() {
         const tbody = document.getElementById("gupshup-table");
 
         try {
-          const res = await fetch(
+          // Carrega os dados do Gupshup
+          const resGupshup = await fetch(
             `${API_BASE_URL}/webhook/gupshup/waba-health`,
             {
               headers: { apikey: API_KEY },
             }
           );
 
-          const result = await res.json();
+          const resultGupshup = await resGupshup.json();
+
+          // Carrega os disparos de hoje
+          const disparosMap = await carregarDisparosHoje();
+
           tbody.innerHTML = "";
-          result.data.forEach((item) => {
+
+          resultGupshup.data.forEach((item) => {
             const tr = document.createElement("tr");
-            var phone = item.phone;
+            const phone = item.phone;
+            const phoneNumber = phone.slice(-4); // últimos 4 dígitos
+
+            // Busca o reference_number correspondente no mapeamento
+            const referenceNumber = PHONE_MAPPING[phoneNumber] || phoneNumber;
+
+            // Busca o total de disparos usando o reference_number
+            const totalDisparos = disparosMap[referenceNumber] || 0;
+
             tr.innerHTML = `
-                <td>${phone.slice(-4)}</td>
+                <td>${phoneNumber}</td>
                 <td class="${item.phoneQuality}">${item.phoneQuality}</td>
+                <td>${totalDisparos.toLocaleString("pt-BR")}</td>
             `;
             tbody.appendChild(tr);
           });
-        } catch {
-          tbody.innerHTML = "<tr><td colspan='2'>Erro</td></tr>";
+        } catch (error) {
+          console.error("Erro ao carregar Gupshup:", error);
+          tbody.innerHTML = "<tr><td colspan='3'>Erro</td></tr>";
         }
       }
 
@@ -294,7 +345,7 @@
         carregarConsultasStatus();
         carregarLeads();
         carregarGupshup();
-      }, 60000);
+      }, 30000);
     </script>
   </body>
 </html>
