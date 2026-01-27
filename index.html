@@ -61,7 +61,6 @@
       .RED {
         color: #ef4444;
       }
-
       .WHITE {
         color: #ffffff;
       }
@@ -131,20 +130,27 @@
 
       /* Telefone */
       #gupshup-table td:nth-child(1) {
-        font-size: 20px; /* telefone */
+        font-size: 20px;
         font-weight: 600;
         letter-spacing: 0.5px;
       }
 
-      /* Qualidade (GREEN / RED) */
+      /* Qualidade */
       #gupshup-table td:nth-child(2) {
-        font-size: 20px; /* status */
+        font-size: 20px;
         font-weight: 300;
         letter-spacing: 1.5px;
       }
 
-      /* Total de disparos */
+      /* FGTS */
       #gupshup-table td:nth-child(3) {
+        font-size: 18px;
+        font-weight: 500;
+        color: #22c55e;
+      }
+
+      /* CLT */
+      #gupshup-table td:nth-child(4) {
         font-size: 18px;
         font-weight: 500;
         color: #60a5fa;
@@ -201,12 +207,13 @@
             <tr>
               <th>Telefone</th>
               <th>Qualidade</th>
-              <th>Disparos Hoje</th>
+              <th>FGTS</th>
+              <th>CLT</th>
             </tr>
           </thead>
           <tbody id="gupshup-table">
             <tr>
-              <td colspan="3">Carregando...</td>
+              <td colspan="4">Carregando...</td>
             </tr>
           </tbody>
         </table>
@@ -222,20 +229,14 @@
     </section>
 
     <script>
-      /* ================= CONFIG ================= */
       const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
       const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
-      const HOJE_API_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/hoje"; // URL do endpoint Python
+      const HOJE_API_URL = `${API_BASE_URL}/hoje`;
 
-      /* ================= MAPEAMENTO DE NÚMEROS ================= */
-      // Mapeia o número do Gupshup para o reference_number do /hoje
       const PHONE_MAPPING = {
         8303: "2611",
-        // Adicione mais mapeamentos conforme necessário
-        // "outro_numero_gupshup": "reference_number_correspondente",
       };
 
-      /* ================= FULLSCREEN ================= */
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen();
@@ -244,25 +245,18 @@
         }
       }
 
-      /* ================= STATUS CONSULTAS ================= */
       async function carregarConsultasStatus() {
         const container = document.getElementById("consultas-cards");
-
         try {
           const res = await fetch(`${API_BASE_URL}/webhook/consultas-status`, {
             headers: { apikey: API_KEY },
           });
-
           const data = await res.json();
           container.innerHTML = "";
-
           data.forEach((item) => {
             const card = document.createElement("div");
             card.className = "card";
-            card.innerHTML = `
-                <h3>${item.status}</h3>
-                <p>${item.count}</p>
-            `;
+            card.innerHTML = `<h3>${item.status}</h3><p>${item.count}</p>`;
             container.appendChild(card);
           });
         } catch {
@@ -270,26 +264,18 @@
         }
       }
 
-      /* ================= LEADS ================= */
       async function carregarLeads() {
         const container = document.getElementById("leads-cards");
-
         try {
           const res = await fetch(`${API_BASE_URL}/webhook/chatguru/leads`, {
             headers: { apikey: API_KEY },
           });
-
           const result = await res.json();
           container.innerHTML = "";
-
           result.data.forEach((item) => {
-            let color = "WHITE";
             const card = document.createElement("div");
             card.className = "card lead-card";
-            card.innerHTML = `
-                <h3>${item.name}</h3>
-                <p class="${color}">${item.aberto}</p>
-            `;
+            card.innerHTML = `<h3>${item.name}</h3><p>${item.aberto}</p>`;
             container.appendChild(card);
           });
         } catch {
@@ -297,82 +283,79 @@
         }
       }
 
-      /* ================= DISPAROS HOJE ================= */
       async function carregarDisparosHoje() {
         try {
           const res = await fetch(HOJE_API_URL);
           const data = await res.json();
 
-          // Cria um mapa de referência número -> total
-          const disparosMap = {};
-          data.forEach((item) => {
-            disparosMap[item.number] = item.total;
+          const mapa = { fgts: {}, clt: {} };
+
+          Object.keys(mapa).forEach((tipo) => {
+            if (data[tipo]) {
+              data[tipo].forEach((item) => {
+                mapa[tipo][item.number] = item.total;
+              });
+            }
           });
 
-          return disparosMap;
-        } catch (error) {
-          console.error("Erro ao carregar disparos de hoje:", error);
-          return {};
+          return mapa;
+        } catch {
+          return { fgts: {}, clt: {} };
         }
       }
 
-      /* ================= GUPSHUP ================= */
       async function carregarGupshup() {
         const tbody = document.getElementById("gupshup-table");
 
         try {
-          // Carrega os dados do Gupshup
-          const resGupshup = await fetch(
+          const res = await fetch(
             `${API_BASE_URL}/webhook/gupshup/waba-health`,
             {
               headers: { apikey: API_KEY },
             }
           );
+          const result = await res.json();
 
-          const resultGupshup = await resGupshup.json();
-
-          // Carrega os disparos de hoje
-          const disparosMap = await carregarDisparosHoje();
+          const disparos = await carregarDisparosHoje();
 
           tbody.innerHTML = "";
 
-          let totalGeral = 0;
+          let totalFgts = 0;
+          let totalClt = 0;
 
-          resultGupshup.data.forEach((item) => {
+          result.data.forEach((item) => {
+            const phoneNumber = item.phone.slice(-4);
+            const ref = PHONE_MAPPING[phoneNumber] || phoneNumber;
+
+            const fgts = disparos.fgts[ref] || 0;
+            const clt = disparos.clt[ref] || 0;
+
+            totalFgts += fgts;
+            totalClt += clt;
+
             const tr = document.createElement("tr");
-            const phone = item.phone;
-            const phoneNumber = phone.slice(-4); // últimos 4 dígitos
-
-            // Busca o reference_number correspondente no mapeamento
-            const referenceNumber = PHONE_MAPPING[phoneNumber] || phoneNumber;
-
-            // Busca o total de disparos usando o reference_number
-            const totalDisparos = disparosMap[referenceNumber] || 0;
-            totalGeral += totalDisparos;
-
             tr.innerHTML = `
-                <td>${phoneNumber}</td>
-                <td class="${item.phoneQuality}">${item.phoneQuality}</td>
-                <td>${totalDisparos.toLocaleString("pt-BR")}</td>
+              <td>${phoneNumber}</td>
+              <td class="${item.phoneQuality}">${item.phoneQuality}</td>
+              <td>${fgts.toLocaleString("pt-BR")}</td>
+              <td>${clt.toLocaleString("pt-BR")}</td>
             `;
             tbody.appendChild(tr);
           });
 
-          // Adiciona linha de total
           const trTotal = document.createElement("tr");
           trTotal.className = "total-row";
           trTotal.innerHTML = `
-              <td colspan="2">Total Geral</td>
-              <td>${totalGeral.toLocaleString("pt-BR")}</td>
+            <td colspan="2">Total Geral</td>
+            <td>${totalFgts.toLocaleString("pt-BR")}</td>
+            <td>${totalClt.toLocaleString("pt-BR")}</td>
           `;
           tbody.appendChild(trTotal);
-        } catch (error) {
-          console.error("Erro ao carregar Gupshup:", error);
-          tbody.innerHTML = "<tr><td colspan='3'>Erro</td></tr>";
+        } catch {
+          tbody.innerHTML = "<tr><td colspan='4'>Erro</td></tr>";
         }
       }
 
-      /* ================= INIT ================= */
       carregarConsultasStatus();
       carregarLeads();
       carregarGupshup();
