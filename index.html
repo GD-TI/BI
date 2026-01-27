@@ -23,6 +23,87 @@
         margin: 20px 0 10px;
       }
 
+      /* ================= HEADER COM DATA ================= */
+      .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .date-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #020617;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1px solid #1e293b;
+      }
+
+      .date-selector label {
+        font-size: 14px;
+        color: #94a3b8;
+        font-weight: 500;
+      }
+
+      .date-selector input[type="date"] {
+        background: #0f172a;
+        color: #e5e7eb;
+        border: 1px solid #334155;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .date-selector input[type="date"]:hover {
+        border-color: #3b82f6;
+      }
+
+      .date-selector input[type="date"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      /* Personalização do calendário */
+      .date-selector input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .btn-today {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .btn-today:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+      }
+
+      .btn-today:active {
+        transform: translateY(0);
+      }
+
+      .date-info {
+        font-size: 13px;
+        color: #64748b;
+        margin-left: 8px;
+      }
+
       /* ================= CARDS ================= */
       .grid {
         display: grid;
@@ -121,10 +202,21 @@
         z-index: 9999;
       }
 
+      /* ================= LOADING STATE ================= */
+      .loading {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
       /* ================= RESPONSIVO ================= */
       @media (max-width: 1024px) {
         .bottom-section {
           grid-template-columns: 1fr;
+        }
+
+        .header-container {
+          flex-direction: column;
+          align-items: flex-start;
         }
       }
 
@@ -187,7 +279,16 @@
       ⛶ Tela cheia
     </button>
 
-    <h1>📊 Dashboard Operacional</h1>
+    <div class="header-container">
+      <h1>📊 Dashboard Operacional</h1>
+
+      <div class="date-selector">
+        <label for="date-input">📅 Data:</label>
+        <input type="date" id="date-input" onchange="handleDateChange()" />
+        <button class="btn-today" onclick="voltarParaHoje()">Hoje</button>
+        <span class="date-info" id="date-info"></span>
+      </div>
+    </div>
 
     <!-- ================= TOPO ================= -->
     <section class="top-section">
@@ -231,11 +332,90 @@
     <script>
       const API_BASE_URL = "https://tr84dfw4-8922.brs.devtunnels.ms/";
       const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
-      const HOJE_API_URL = `${API_BASE_URL}/hoje`;
 
       const PHONE_MAPPING = {
         8303: "2611",
       };
+
+      let selectedDate = null;
+      let autoRefreshInterval = null;
+
+      // ================= FUNÇÕES DE DATA ================= //
+
+      function getToday() {
+        const hoje = new Date();
+        return hoje.toISOString().split("T")[0];
+      }
+
+      function formatDateBR(dateStr) {
+        const [ano, mes, dia] = dateStr.split("-");
+        return `${dia}/${mes}/${ano}`;
+      }
+
+      function isToday(dateStr) {
+        return dateStr === getToday();
+      }
+
+      function initDatePicker() {
+        const dateInput = document.getElementById("date-input");
+        const today = getToday();
+
+        dateInput.value = today;
+        selectedDate = today;
+
+        updateDateInfo();
+      }
+
+      function updateDateInfo() {
+        const dateInfo = document.getElementById("date-info");
+        if (isToday(selectedDate)) {
+          dateInfo.textContent = "(Atualização automática ativa)";
+          startAutoRefresh();
+        } else {
+          dateInfo.textContent = `Visualizando: ${formatDateBR(selectedDate)}`;
+          stopAutoRefresh();
+        }
+      }
+
+      function handleDateChange() {
+        const dateInput = document.getElementById("date-input");
+        selectedDate = dateInput.value;
+
+        updateDateInfo();
+        carregarTodosDados();
+      }
+
+      function voltarParaHoje() {
+        const dateInput = document.getElementById("date-input");
+        const today = getToday();
+
+        dateInput.value = today;
+        selectedDate = today;
+
+        updateDateInfo();
+        carregarTodosDados();
+      }
+
+      // ================= AUTO REFRESH ================= //
+
+      function startAutoRefresh() {
+        if (autoRefreshInterval) return; // Já está rodando
+
+        autoRefreshInterval = setInterval(() => {
+          if (isToday(selectedDate)) {
+            carregarTodosDados();
+          }
+        }, 30000); // 30 segundos
+      }
+
+      function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+          clearInterval(autoRefreshInterval);
+          autoRefreshInterval = null;
+        }
+      }
+
+      // ================= FUNÇÕES DE TELA CHEIA ================= //
 
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
@@ -245,13 +425,20 @@
         }
       }
 
+      // ================= FUNÇÕES DE CARREGAMENTO ================= //
+
       async function carregarConsultasStatus() {
         const container = document.getElementById("consultas-cards");
         try {
-          const res = await fetch(`${API_BASE_URL}/webhook/consultas-status`, {
+          const url = `${API_BASE_URL}/webhook/consultas-status?date=${selectedDate}`;
+          const res = await fetch(url, {
             headers: { apikey: API_KEY },
           });
-          const data = await res.json();
+          const response = await res.json();
+
+          // A resposta agora tem formato { date: "...", data: [...] }
+          const data = response.data || response;
+
           container.innerHTML = "";
           data.forEach((item) => {
             const card = document.createElement("div");
@@ -259,8 +446,9 @@
             card.innerHTML = `<h3>${item.status}</h3><p>${item.count}</p>`;
             container.appendChild(card);
           });
-        } catch {
-          container.innerHTML = "<div class='card'>Erro</div>";
+        } catch (error) {
+          console.error("Erro ao carregar consultas:", error);
+          container.innerHTML = "<div class='card'>Erro ao carregar</div>";
         }
       }
 
@@ -278,15 +466,20 @@
             card.innerHTML = `<h3>${item.name}</h3><p>${item.aberto}</p>`;
             container.appendChild(card);
           });
-        } catch {
-          container.innerHTML = "<div class='card'>Erro</div>";
+        } catch (error) {
+          console.error("Erro ao carregar leads:", error);
+          container.innerHTML = "<div class='card'>Erro ao carregar</div>";
         }
       }
 
       async function carregarDisparosHoje() {
         try {
-          const res = await fetch(HOJE_API_URL);
-          const data = await res.json();
+          const url = `${API_BASE_URL}/hoje?date=${selectedDate}`;
+          const res = await fetch(url);
+          const response = await res.json();
+
+          // A resposta agora tem formato { date: "...", data: {...} }
+          const data = response.data || response;
 
           const mapa = { fgts: {}, clt: {} };
 
@@ -299,7 +492,8 @@
           });
 
           return mapa;
-        } catch {
+        } catch (error) {
+          console.error("Erro ao carregar disparos:", error);
           return { fgts: {}, clt: {} };
         }
       }
@@ -351,20 +545,24 @@
             <td>${totalClt.toLocaleString("pt-BR")}</td>
           `;
           tbody.appendChild(trTotal);
-        } catch {
-          tbody.innerHTML = "<tr><td colspan='4'>Erro</td></tr>";
+        } catch (error) {
+          console.error("Erro ao carregar Gupshup:", error);
+          tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar</td></tr>";
         }
       }
 
-      carregarConsultasStatus();
-      carregarLeads();
-      carregarGupshup();
-
-      setInterval(() => {
+      function carregarTodosDados() {
         carregarConsultasStatus();
         carregarLeads();
         carregarGupshup();
-      }, 30000);
+      }
+
+      // ================= INICIALIZAÇÃO ================= //
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initDatePicker();
+        carregarTodosDados();
+      });
     </script>
   </body>
 </html>
