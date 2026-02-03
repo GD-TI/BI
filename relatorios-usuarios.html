@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Relatório por Usuário</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #020617, #0f172a);
+        color: #e5e7eb;
+        padding: 20px;
+        height: 100vh;
+        box-sizing: border-box;
+      }
+
+      h1 {
+        font-size: 26px;
+        margin-bottom: 5px;
+      }
+
+      #info-data {
+        margin-bottom: 20px;
+        color: #94a3b8;
+      }
+
+      /* GRID PRINCIPAL */
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        height: calc(100vh - 140px);
+      }
+
+      /* CARD */
+      .card {
+        background: #020617;
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .card h2 {
+        margin: 0 0 10px 0;
+        font-size: 18px;
+      }
+
+      /* ÁREA SCROLL */
+      .table-container {
+        overflow-y: auto;
+        flex: 1;
+        border-radius: 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #1e293b;
+        font-size: 14px;
+      }
+
+      th {
+        color: #94a3b8;
+        text-align: left;
+        position: sticky;
+        top: 0;
+        background: #020617;
+        z-index: 1;
+      }
+
+      .total {
+        font-weight: bold;
+        font-size: 16px;
+        background: rgba(59, 130, 246, 0.1);
+      }
+
+      /* MOBILE */
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        .card {
+          max-height: 60vh;
+        }
+      }
+      /* HOVER NAS LINHAS DA TABELA */
+      tbody tr {
+        transition: background-color 0.15s ease;
+      }
+
+      tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+        cursor: default;
+      }
+
+      /* Mantém o total destacado e sem hover forte */
+      tbody tr.total:hover {
+        background-color: rgba(59, 130, 246, 0.15);
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>📄 Relatório de Consultas por Usuário</h1>
+    <p id="info-data"></p>
+
+    <div class="grid">
+      <!-- TODOS OS STATUS -->
+      <div class="card">
+        <h2>Todos os Status</h2>
+        <div class="table-container">
+          <table id="table-geral">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Quantidade</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STATUS 3 -->
+      <div class="card">
+        <h2>Status Sucesso</h2>
+        <div class="table-container">
+          <table id="table-status-3">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Quantidade</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- STATUS 3 -->
+      <div class="card">
+        <h2>Vendas</h2>
+        <div class="table-container">
+          <table id="Vendas">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Quantidade</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "https://2d3p5d6h-8922.brs.devtunnels.ms/";
+      const API_KEY = "xsbfflgdod6zbjx1mxyh8gxeut3cdv2a";
+
+      const params = new URLSearchParams(window.location.search);
+      const date = params.get("date");
+
+      document.getElementById("info-data").innerText =
+        "Data selecionada: " + date.split("-").reverse().join("/");
+
+      async function carregarTabela(endpoint, tableId) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+          method: "POST",
+          headers: {
+            Authorization: API_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            date_start: date.split("-").reverse().join("/"),
+            date_end: date.split("-").reverse().join("/"),
+          }),
+        });
+
+        const json = await res.json();
+        const data = json.data || [];
+
+        let total = 0;
+        tbody.innerHTML = "";
+
+        data.forEach((item) => {
+          total += item.quantidade;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+          <td>${item.user_name}</td>
+          <td>${item.quantidade}</td>
+        `;
+          tbody.appendChild(tr);
+        });
+
+        const trTotal = document.createElement("tr");
+        trTotal.className = "total";
+        trTotal.innerHTML = `
+        <td>Total</td>
+        <td>${total}</td>
+      `;
+        tbody.appendChild(trTotal);
+      }
+
+      carregarTabela("/webhook/consultas-clt/por-usuario", "table-geral");
+
+      carregarTabela(
+        "/webhook/consultas-clt/por-usuario/status-3",
+        "table-status-3",
+      );
+      carregarTabela("/webhook/consultas-clt/ranking-performance", "Vendas");
+    </script>
+  </body>
+</html>
