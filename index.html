@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -288,6 +288,13 @@
         <button class="btn-today" onclick="voltarParaHoje()">Hoje</button>
         <span class="date-info" id="date-info"></span>
       </div>
+      <button
+        class="btn-today"
+        style="background: #22c55e"
+        onclick="abrirRelatorioUsuarios()"
+      >
+        📄 Relatório por Usuário
+      </button>
     </div>
 
     <!-- ================= TOPO ================= -->
@@ -506,7 +513,7 @@
             `${API_BASE_URL}/webhook/gupshup/waba-health`,
             {
               headers: { apikey: API_KEY },
-            }
+            },
           );
           const result = await res.json();
 
@@ -563,6 +570,11 @@
         initDatePicker();
         carregarTodosDados();
       });
+
+      function abrirRelatorioUsuarios() {
+        const date = selectedDate || getToday();
+        window.open(`relatorio-usuarios.html?date=${date}`, "_blank");
+      }
     </script>
   </body>
 </html>
